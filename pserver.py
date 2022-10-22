@@ -16,6 +16,4 @@ while True:
     temp=data[0].split(' ')
     method=temp[0]
     req=temp[1]
-    print(method)
-    print(req)
-    
+    test=socket.gethostbyname(req)
