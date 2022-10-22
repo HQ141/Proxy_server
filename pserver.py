@@ -1,3 +1,4 @@
+from email import header
 from http.client import HTTPConnection
 import imp
 import socket
@@ -11,5 +12,10 @@ while True:
     conn,addr=server.accept()
     data=conn.recv(1024).decode()
     print(data)
+    data=data.split('\n')
+    temp=data[0].split(' ')
+    method=temp[0]
+    req=temp[1]
+    print(method)
+    print(req)
     
-
