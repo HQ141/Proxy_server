@@ -12,7 +12,13 @@ import shutil
 from pickle import TRUE
 import socket
 cache_Q=[]
+blacklist=[]
 def init_prog():
+    f=open('blacklist.txt','r')
+    text=f.read()
+    text=text.split('\n')
+    for lines in text:
+        blacklist.append(lines.strip())
     if(os.path.isdir(".Cache")):
         shutil.rmtree(".Cache")
     os.mkdir(".Cache")
@@ -36,11 +42,18 @@ def client_Connection(client_socket):
     temp=method.split(' ')
     if(re.search('^(http)://',temp[1])):
         resp=get_file(method,data,client_socket,raw)
-        client_socket.sendall(resp)
+        if(resp!=""):
+            client_socket.sendall(resp)
         client_socket.close()
 
 def get_file(method,data,client_socket,raw):
     hash_val=hash(method)
+    try:
+        index=blacklist.index(data['Host'].strip())
+        resp=""
+        return resp
+    except:
+        pass
     try:
         index=cache_Q.index(hash_val)
         cache_Q.pop(index)
