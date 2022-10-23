@@ -19,14 +19,16 @@ def init_prog():
 
 def split_headers(raw_msg):
     req_headers={}
+    method=''
     lines=raw_msg.split('\n')
     for lines in lines:
-        if(re.search('GET',lines)==None):
+        if(re.search('HTTP',lines)==None):
             lines=lines.split(':')
             if(len(lines)>1):
                     req_headers[lines[0]]=lines[1]
         else:
-            method=lines
+            if(method==''):
+                method=lines
     return method,req_headers,raw_msg   
 def client_Connection(client_socket):
     data=client_socket.recv(1024).decode()
@@ -62,6 +64,11 @@ def http_Conn(top_header,data,conn,raw):
     server_socket.connect((ip,80))
     server_socket.sendall(raw.encode())
     resp=server_socket.recv(1024)
+    len_recieved=1024
+    method,resp_header,temp=split_headers(resp.decode())
+    while((int(resp_header['Content-Length']))>=len_recieved):
+        resp=resp+server_socket.recv(1024)
+        len_recieved=len_recieved+1024
     server_socket.close()
     return resp
 
