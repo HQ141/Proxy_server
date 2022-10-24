@@ -1,3 +1,4 @@
+from http import server
 import ssl
 from functools import cache
 from genericpath import isdir, isfile
@@ -75,13 +76,13 @@ def http_Conn(top_header,data,conn,raw):
     server_socket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     server_socket.connect((ip,80))
     server_socket.sendall(raw.encode())
-    resp=server_socket.recv(2048)
-    len_recieved=2048
+    resp=server_socket.recv(4096)
+    len_recieved=4096
     method,resp_header,temp=split_headers(resp.decode())
     try:
         while((int(resp_header['Content-Length']))>=len_recieved):
-            resp=resp+server_socket.recv(2048)
-            len_recieved=len_recieved+2048
+            resp=resp+server_socket.recv(4096)
+            len_recieved=len_recieved+4096
     except:
         pass
     server_socket.close()
@@ -102,7 +103,7 @@ def http_proxy():
 
 def https_proxy():
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    context.load_cert_chain('/home/kaizukooni/Desktop/cert/CA/CA.pem', keyfile='/home/kaizukooni/Desktop/cert/CA/localhost/localhost.key',password='killjoy56')
+    context.load_cert_chain('/home/kaizukooni/Desktop/cert/CA/localhost/localhost.crt', keyfile='/home/kaizukooni/Desktop/cert/CA/localhost/localhost.key',password='killjoy56')
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sock:
         sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,True)
@@ -112,6 +113,14 @@ def https_proxy():
             conn, addr = ssock.accept()
             req=conn.recv(1024)
             print(req.decode())
+        method,req_header,raw=split_headers(req.decode())
+        hostname=socket.gethostbyname(req_header['Host'].strip())
+        server_sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        sserver_sock=ssl.wrap_socket(server_sock,keyfile=None,certfile=None,server_side=False,cert_reqs=ssl.CERT_NONE,ssl_version=ssl.PROTOCOL_SSLv23)
+        sserver_sock.connect((hostname,443))
+        sserver_sock.sendall(raw.encode())
+        temp=sserver_sock.recv(4096)
+        print(temp)
 
 def main():
     http_pthread=threading.Thread(target=http_proxy)
