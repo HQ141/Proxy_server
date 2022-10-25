@@ -21,9 +21,9 @@ def init_prog():
     text=text.split('\n')
     for lines in text:
         blacklist.append(lines.strip())
-    if(os.path.isdir(".Cache")):
+    '''   if(os.path.isdir(".Cache")):
         shutil.rmtree(".Cache")
-    os.mkdir(".Cache")
+    os.mkdir(".Cache")'''
 
 def split_headers(raw_msg):
     req_headers={}
