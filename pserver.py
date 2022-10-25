@@ -100,28 +100,55 @@ def http_proxy():
     except Exception as e:
         print(e)
         pass
+def HTTPS_Connection(client_socket):
+    req=client_socket.recv(4096)
+    resp='HTTP/1.0 200 Connection Established\r\n\r\n'
+    try:
+        method,data,raw=split_headers(req.decode())
+    except:
+        client_socket.close()
+        return
+    
+    client_socket.sendall(resp.encode())
+    req=client_socket.recv(4096)
+    try:
+        index=blacklist.index(data['Host'].strip())
+        client_socket.close()
+        return
+    except:
+        pass
+    
+    ip=socket.gethostbyname(data['Host'].strip())
+    server_socket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    server_socket.connect((ip,443))
+    server_socket.sendall(req)
+    client_socket.setblocking(0)
+    server_socket.setblocking(0)
+    while True:
+        try:
+            resp=server_socket.recv(4096)
+            client_socket.sendall(resp)
+        except:
+            pass
+        try:
+            req=client_socket.recv(4096)
+            server_socket.sendall(req)
+        except:
+            pass
 
 def https_proxy():
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    context.load_cert_chain('/home/kaizukooni/Desktop/cert/CA/localhost/localhost.crt', keyfile='/home/kaizukooni/Desktop/cert/CA/localhost/localhost.key',password='killjoy56')
-
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sock:
-        sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,True)
-        sock.bind(('127.0.0.1', 8889))
-        sock.listen(5)
-        with context.wrap_socket(sock, server_side=True) as ssock:
-            conn, addr = ssock.accept()
-            req=conn.recv(1024)
-            print(req.decode())
-        method,req_header,raw=split_headers(req.decode())
-        hostname=socket.gethostbyname(req_header['Host'].strip())
-        server_sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        sserver_sock=ssl.wrap_socket(server_sock,keyfile=None,certfile=None,server_side=False,cert_reqs=ssl.CERT_NONE,ssl_version=ssl.PROTOCOL_SSLv23)
-        sserver_sock.connect((hostname,443))
-        sserver_sock.sendall(raw.encode())
-        temp=sserver_sock.recv(4096)
-        print(temp)
-
+    https_server=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    https_server.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,True)
+    https_server.bind(('127.0.0.1',8899))
+    https_server.listen(10)
+    try:
+        while TRUE:
+            client_socket,addr=https_server.accept()
+            client_thread=threading.Thread(target=HTTPS_Connection,args=[client_socket])
+            client_thread.start()
+    except Exception as e:
+        print(e)
+        pass
 def main():
     http_pthread=threading.Thread(target=http_proxy)
     http_pthread.start()
